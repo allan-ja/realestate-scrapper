@@ -4,17 +4,17 @@ from scrapy.spiders import SitemapSpider
 from realestate_scraper.items import AtlantiqueSudItem
 
 
-class AlantiqueSudSpider(SitemapSpider):
+class AlantiqueSudSpider(scrapy.Spider):
     name = "atlantique_sud"
 
-    # def start_requests(self):
-    #     urls = [
-    #         "https://realestatelasterrenas.com/properties/large-apartment-in-beachfront-community",
-    #     ]
-    #     for url in urls:
-    #         yield scrapy.Request(url=url, callback=self.parse)
-    sitemap_urls = ["https://realestatelasterrenas.com/sitemap.xml"]
-    sitemap_rules = [("/properties/", "parse_properties")]
+    def start_requests(self):
+        urls = [
+            "https://realestatelasterrenas.com/properties/large-apartment-in-beachfront-community",
+        ]
+        for url in urls:
+            yield scrapy.Request(url=url, callback=self.parse)
+    # sitemap_urls = ["https://realestatelasterrenas.com/sitemap.xml"]
+    # sitemap_rules = [("/properties/", "parse_properties")]
 
     def parse_properties(self, response):
         item = AtlantiqueSudItem()
