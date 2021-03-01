@@ -7,38 +7,49 @@ class AlantiqueSudSpider(scrapy.Spider):
     name = "atlantique_sud"
 
     url = "https://realestatelasterrenas.com/villas-for-sale"
-
-    def start_requests(self):
-        script = """
+    script = """
             function main(splash, args)
                 splash:go(args.url)
                 local scroll_to = splash:jsfunc("window.scrollTo")
                 scroll_to(0, 10300)
-                splash:runjs("setInterval(function () {document.getElementsByClassName('pagination-item-2')[0].children[0].click();}, 1000);")
+                splash:runjs("setInterval(function () {document.getElementsByClassName('pagination-item-{page}')[0].children[0].click();}, 1000);")
                 scroll_to(0, 2300)
                 splash:wait(8)
                 return {html=splash:html()}
             end
         """
-        yield scrapy.Request(self.url, callback=self.parse_properties_page)
+
+    def start_requests(self):
+        splash_args = {
+            "html": 1,
+            "width": 600,
+            "render_all": 1,
+        }
+        # yield scrapy.Request(self.url, callback=self.save_files_page_2)
+        # yield SplashRequest(
+        #     self.url,
+        #     self.parse_properties_page,
+        #     endpoint="execute",
+        #     args={"lua_source": self.script},
+        #     dont_filter=True,
+        # )
+        scroll = """
+            function main(splash, args)
+                splash:go(args.url)
+                local scroll_to = splash:jsfunc("window.scrollTo")
+                scroll_to(0, 10300)
+                splash:wait(5)
+                return {html=splash:html()}
+            end
+        """
+
         yield SplashRequest(
             self.url,
             self.parse_properties_page,
             endpoint="execute",
-            args={"lua_source": script},
-            dont_filter=True,
+            args={"lua_source": scroll},
+            # dont_filter=True,
         )
-        # yield SplashRequest(
-        #     self.url,
-        #     self.parse_properties_page,
-        #     args={
-        #         # optional; parameters passed to Splash HTTP API
-        #         "wait": 0.5,
-        #         # 'url' is prefilled from request url
-        #         # 'http_method' is set to 'POST' for POST requests
-        #         # 'body' is set to request body for POST requests
-        #     },
-        # )
 
         # yield scrapy.Request(
         #     self.url,
@@ -74,34 +85,29 @@ class AlantiqueSudSpider(scrapy.Spider):
             # )
         # yield from response.follow_all(properties_page_links, self.save_files_page_2)
         print("LET's GO!")
-        script = """
-            function main(splash, args)
-                splash:go(args.url)
-                local scroll_to = splash:jsfunc("window.scrollTo")
-                scroll_to(0, 10300)
-                splash:runjs("setInterval(function () {document.getElementsByClassName('pagination-item-2')[0].children[0].click();}, 1000);")
-                scroll_to(0, 2300)
-                splash:wait(8)
-                return {html=splash:html()}
-            end
-        """
-
-        yield SplashRequest(
-            self.url,
-            self.parse_properties_page,
-            endpoint="execute",
-            args={"lua_source": script},
-        )
+        current_page = int(response.css("div.page-number.active a::text").get())
+        last_page = int(response.css("div.page-number-last a::text").get())
+        if current_page != last_page:
+            next_page = str(current_page + 1)
+            print(f"Crawling page {next_page}")
+            print(self.script.replace("{page}", next_page))
+            yield SplashRequest(
+                self.url,
+                self.parse_properties_page,
+                endpoint="execute",
+                args={"lua_source": self.script.replace("{page}", next_page)},
+                dont_filter=True,
+            )
 
     def save_files_page_1(self, response):
         page = response.url.split("/")[-1]
-        filename = f"data/test-page-1/atlantiquesud-{page}.html"
+        filename = f"data/output/test-3/atlantiquesud-{page}.html"
         with open(filename, "wb") as f:
             f.write(response.body)
 
     def save_files_page_2(self, response):
         page = response.url.split("/")[-1]
-        filename = f"data/test-page-2/atlantiquesud-{page}.html"
+        filename = f"data/output/atlantiquesud-{page}.html"
         with open(filename, "wb") as f:
             f.write(response.body)
 
