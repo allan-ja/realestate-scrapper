@@ -1,5 +1,4 @@
 import scrapy
-from scrapy.spiders import SitemapSpider
 from scrapy_splash import SplashRequest
 from realestate_scraper.items import AtlantiqueSudItem
 
@@ -8,8 +7,6 @@ class AlantiqueSudSpider(scrapy.Spider):
     name = "atlantique_sud"
 
     url = "https://realestatelasterrenas.com/villas-for-sale"
-
-    # url = "file:///Users/allan/Development/realestate-scrapper/data/atlantiquesud-villas-for-sale.html"
 
     def start_requests(self):
         script = """
